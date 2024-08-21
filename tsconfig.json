@@ -1,0 +1,32 @@
+{
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "test"
+  ],
+  "compilerOptions": {
+    "module": "CommonJS",
+    "target": "es5",
+    "lib": [
+      "esnext",
+      "dom"
+    ],
+    "moduleResolution": "node",
+    "allowJs": true,
+    "importHelpers": true,
+    "declaration": true,
+    "sourceMap": true,
+    "strict": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "experimentalDecorators": true,
+    "strictPropertyInitialization": false,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "baseUrl": "./",
+    "outDir": "dist"
+  }
+}
