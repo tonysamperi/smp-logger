@@ -6,7 +6,7 @@ module.exports = {
         minimize: process.env.NODE_ENV === "production"
     },
     externals: [
-        ...Object.keys(peerDependencies),
+        ...Object.keys(peerDependencies || {}),
         // This needs to be forced cause even autoExternal fails and excluding "firebase" doesn't work. Weird.
         /^@?firebase*/
     ],

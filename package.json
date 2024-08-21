@@ -25,7 +25,7 @@
     "clean": "rimraf dist",
     "release": "npm publish",
     "release:beta": "npm publish --tag beta",
-    "test": "echo foo"
+    "test": "jest --coverage"
   },
   "author": "Tony Samperi",
   "license": "ISC",

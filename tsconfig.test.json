@@ -4,5 +4,13 @@
     ],
     "include": [
         "./test/**/*.ts"
-    ]
+    ],
+    "compilerOptions": {
+        "paths": {
+            "smp-logger": ["./dist/index.ts",],
+            "smp-logger/*": [
+                "./dist/*"
+            ]
+        }
+    }
 }

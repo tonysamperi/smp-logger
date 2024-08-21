@@ -4,12 +4,15 @@ import { SmpLoggerMethods } from "../shared/smp-logger-methods.class";
 import { smpNoop } from "../shared/smp-noop.function";
 import { SmpLoggerMethodKeys } from "src/shared";
 
+const defaultAppName = "[DEFAULT]" as const;
+
 /**
  * A logger service that provide the same functions as {@link console}.
  * The logger is bound to the console, so the Web Console shows the correct file and line number of the original call.
  */
 export class SmpLoggerService extends SmpLoggerMethods {
-    static get instance() {
+
+    static get INSTANCE() {
         if (!(this._instance instanceof SmpLoggerService)) {
             console.warn("SmpLoggerService instance doesn't exist! Call SmpLoggerService.init first! Initialising with defaults.");
             this._instance = new this(this._defaults);
@@ -18,68 +21,92 @@ export class SmpLoggerService extends SmpLoggerMethods {
         return this._instance;
     }
 
-    static get events(): Record<"updateLevel", string> {
-        return {
-            updateLevel: "loggerService:updateLevel"
-        };
-    }
-
     protected static _defaults: SmpLoggerConfig = {
         level: SmpLoggingLevels.OFF
     };
     protected static _instance?: SmpLoggerService;
+    protected static _instances: Map<string | typeof defaultAppName, SmpLoggerService> = new Map<string | typeof defaultAppName, SmpLoggerService>();
     protected static _level: SmpLoggingLevels = SmpLoggingLevels.OFF;
+
+    //
+
+    get appName(): string {
+        return this._appName;
+    }
 
     get level(): SmpLoggingLevels {
         return (this.constructor as typeof SmpLoggerService)._level;
     }
 
-    protected _sensitiveProps: string[];
+    protected _appName: string = defaultAppName;
     protected _sensitivePropMask: string = "*****";
+    protected _sensitiveProps: string[];
 
     protected constructor(config: SmpLoggerConfig) {
         super();
         this._sensitiveProps = [...(config.sensitiveProps || []), ...["pwd", "password", "buffer", "token", "accessToken", "refreshToken"]];
         this._updateLevel(config.level);
+        config.enablePreprocessing || (this.preprocessArgs = (...args) => args);
     }
 
-    static init(config: SmpLoggerConfig) {
-        this._instance = new this(config);
 
-        return this._instance;
+    static get(appName: string = defaultAppName): SmpLoggerService {
+        return this._instances.get(appName) || this._instances.get(defaultAppName) || new SmpLoggerMethods() as SmpLoggerService;
+    }
+
+    static init(config: SmpLoggerConfig,
+        appName: string = defaultAppName): SmpLoggerService {
+        this._instances.has(appName) || this._instances.set(appName, new SmpLoggerService(config));
+
+        return this.get(appName);
     }
 
     filterSensitiveData(value: any): any {
-        let result;
-
-        if (typeof value === typeof {} && !Array.isArray(value)) {
-            const maskedString = JSON.stringify(value, (k, v) => {
-                let masked = v;
-                if (this._sensitiveProps.includes(k)) {
-                    masked = this._sensitivePropMask;
+            if (typeof value === typeof {} && !Array.isArray(value)) {
+                const maskedString = JSON.stringify(value, (k, v) => {
+                    let masked = v;
+                    if (this._sensitiveProps.includes(k)) {
+                        masked = this._sensitivePropMask;
+                    }
+    
+                    return masked;
+                });
+    
+                try {
+                    return JSON.parse(maskedString);
                 }
-
-                return masked;
-            });
-
-            try {
-                result = JSON.parse(maskedString);
+                catch (e) {
+                    console.warn(`${this.constructor.name} [${this._appName}]: failed to re-parse value during cleanup`, value);
+                    return maskedString;
+                }
             }
-            catch (e) {
-                console.error("KikRestLogger: failed to re-parse value during cleanup", value);
-            }
-        }
-        return result;
     }
 
-    protected _setup(baseLogger: any): void {
-        const lvl = (this.constructor as typeof SmpLoggerService)._level;
-        const activeLevels: SmpLoggerMethodKeys[] = Object.values(SmpLoggingLevels)
-            .filter((v) => +v >= lvl)
-            .map((k) => `${SmpLoggingLevels[k as keyof typeof SmpLoggingLevels]}`.toLowerCase() as SmpLoggerMethodKeys);
+    preprocessArgs(...args: [string, ...any[]]): [string, ...{ tags: (string | number)[], metadata: any }[]] {
+        return [
+            args.shift().trim(),
+            ...args.map(value => {
+                return {
+                    tags: [this._appName, this.level],
+                    metadata: this.filterSensitiveData(value)
+                };
+            })
+        ];
+    }
 
-        activeLevels.forEach((lvlKey: SmpLoggerMethodKeys) => {
-            typeof baseLogger[lvlKey] === "function" && (this[lvlKey] = baseLogger[lvlKey].bind(baseLogger));
+    // PRIVATE
+
+    protected _setup(baseLogger: any): void {
+        const preprocessArgs = this.preprocessArgs.bind(this);
+        const lvl = (this.constructor as typeof SmpLoggerService)._level;
+        const activeLevels: string[] = Object.values(SmpLoggingLevels)
+            .filter((v) => +v >= lvl)
+            .map((k) => `${SmpLoggingLevels[k as keyof typeof SmpLoggingLevels]}`.toLowerCase());
+        activeLevels.forEach((lvlKey) => {
+            // typeof baseLogger[lvlKey] === typeof isNaN && (this[lvlKey] = baseLogger[lvlKey].bind(baseLogger));
+            typeof baseLogger[`${lvlKey}`] === typeof isNaN && (this[lvlKey as SmpLoggerMethodKeys] = function(args: any[]) {
+                this[lvlKey as SmpLoggerMethodKeys](...preprocessArgs.apply(null, [args]);
+            });
         });
 
         if (lvl > SmpLoggingLevels.OFF && console) {

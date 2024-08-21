@@ -1,6 +1,8 @@
 module.exports = {
     "transform": {
-        ".(ts|tsx)": "ts-jest"
+        ".(ts|tsx)": ["ts-jest", {
+            tsconfig: "./tsconfig.test.json"
+        }]
     },
     "testEnvironment": "node",
     "testRegex": "\\.(spec|test)\\.ts$",
@@ -23,10 +25,5 @@ module.exports = {
     },
     "collectCoverageFrom": [
         "src/*.{js,ts}"
-    ],
-    globals: {
-        "ts-jest": {
-            tsconfig: "./tsconfig.test.json"
-        }
-    }
+    ]
 };
