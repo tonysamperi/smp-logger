@@ -1,5 +1,4 @@
-import {SmpLoggerService, SmpLoggingLevels} from "../src/index";
-import * as pkg from "../package.json";
+import {SmpGenericLoggerMethodKeys, SmpLoggerService, SmpLoggingLevels} from "../src/index";
 
 describe("SmpLoggerService test", () => {
 
@@ -7,9 +6,19 @@ describe("SmpLoggerService test", () => {
         SmpLoggerService.init({
             level: SmpLoggingLevels.DEBUG
         });
-
+        expect(Array.from(SmpLoggerService.INSTANCES)).toEqual(["[DEFAULT]"]);
         expect(SmpLoggerService.INSTANCE).toBeDefined();
-        expect(SmpLoggerService.INSTANCE.debug)
+        ["debug", "log", "info", "warn", "error"].forEach(method => {
+            expect(typeof SmpLoggerService.INSTANCE[method as SmpGenericLoggerMethodKeys]).toBe(typeof isNaN);
+
+            SmpLoggerService.INSTANCE[method as SmpGenericLoggerMethodKeys](`TEST LOG OF LEVEL "${method}"`, {
+                foo: "bar"
+            });
+
+            // expect(SmpLoggerService.INSTANCE[method as SmpGenericLoggerMethodKeys]).toHaveBeenCalled();
+        });
+
+
     });
-    
+
 });

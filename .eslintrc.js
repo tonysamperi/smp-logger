@@ -2,7 +2,7 @@ module.exports = {
     "parser": "@typescript-eslint/parser",
     "parserOptions": {
         "project": "tsconfig.json",
-        "tsconfigRootDir": "./src"
+        "tsconfigRootDir": "."
     },
     "plugins": [
         "@typescript-eslint"
@@ -19,7 +19,7 @@ module.exports = {
     },
     "ignorePatterns": [
         "node_modules/**",
-        "lib/**",
+        "test/**",
         "gulpfile.js",
         ".eslintrc.js",
         "jest.config.js"

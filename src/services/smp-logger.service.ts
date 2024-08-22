@@ -1,8 +1,8 @@
-import { SmpLoggingLevels } from "../shared/smp-logging-levels.enum";
-import { SmpLoggerConfig } from "../shared/smp-logger-config.interface";
-import { SmpLoggerMethods } from "../shared/smp-logger-methods.class";
-import { smpNoop } from "../shared/smp-noop.function";
-import { SmpLoggerMethodKeys } from "src/shared";
+import {SmpLoggingLevels} from "../shared/smp-logging-levels.enum";
+import {SmpLoggerConfig} from "../shared/smp-logger-config.interface";
+import {SmpLoggerMethods} from "../shared/smp-logger-methods.class";
+import {smpNoop} from "../shared/smp-noop.function";
+import {SmpGenericLoggerMethodKeys} from "../shared/smp-logger-method-keys.type";
 
 const defaultAppName = "[DEFAULT]" as const;
 
@@ -13,12 +13,11 @@ const defaultAppName = "[DEFAULT]" as const;
 export class SmpLoggerService extends SmpLoggerMethods {
 
     static get INSTANCE() {
-        if (!(this._instance instanceof SmpLoggerService)) {
-            console.warn("SmpLoggerService instance doesn't exist! Call SmpLoggerService.init first! Initialising with defaults.");
-            this._instance = new this(this._defaults);
-        }
+        return this.get(defaultAppName);
+    }
 
-        return this._instance;
+    static get INSTANCES() {
+        return this._instances.keys();
     }
 
     protected static _defaults: SmpLoggerConfig = {
@@ -45,8 +44,10 @@ export class SmpLoggerService extends SmpLoggerMethods {
     protected constructor(config: SmpLoggerConfig) {
         super();
         this._sensitiveProps = [...(config.sensitiveProps || []), ...["pwd", "password", "buffer", "token", "accessToken", "refreshToken"]];
+        config.enablePreprocessing || (this.preprocessArgs = (...args: any[]): any[] => {
+            return args;
+        });
         this._updateLevel(config.level);
-        config.enablePreprocessing || (this.preprocessArgs = (...args) => args);
     }
 
 
@@ -55,46 +56,50 @@ export class SmpLoggerService extends SmpLoggerMethods {
     }
 
     static init(config: SmpLoggerConfig,
-        appName: string = defaultAppName): SmpLoggerService {
+                appName: string = defaultAppName): SmpLoggerService {
         this._instances.has(appName) || this._instances.set(appName, new SmpLoggerService(config));
 
         return this.get(appName);
     }
 
     filterSensitiveData(value: any): any {
-            if (typeof value === typeof {} && !Array.isArray(value)) {
-                const maskedString = JSON.stringify(value, (k, v) => {
-                    let masked = v;
-                    if (this._sensitiveProps.includes(k)) {
-                        masked = this._sensitivePropMask;
-                    }
-    
-                    return masked;
-                });
-    
-                try {
-                    return JSON.parse(maskedString);
+        if (typeof value === typeof {} && !Array.isArray(value)) {
+            const maskedString = JSON.stringify(value, (k, v) => {
+                let masked = v;
+                if (this._sensitiveProps.includes(k)) {
+                    masked = this._sensitivePropMask;
                 }
-                catch (e) {
-                    console.warn(`${this.constructor.name} [${this._appName}]: failed to re-parse value during cleanup`, value);
-                    return maskedString;
-                }
+
+                return masked;
+            });
+
+            try {
+                return JSON.parse(maskedString);
             }
+            catch (e) {
+                console.warn(`${this.constructor.name} [${this._appName}]: failed to re-parse value during cleanup`, value);
+                return maskedString;
+            }
+        }
     }
 
-    preprocessArgs(...args: [string, ...any[]]): [string, ...{ tags: (string | number)[], metadata: any }[]] {
+    preprocessArgs(...args: any[]): any[] {
+        return this._defaultPreprocessArgs.apply(this, args);
+    }
+
+    // PRIVATE
+
+    protected _defaultPreprocessArgs(...args: any[]): [string, ...{ tags: (string | number)[], metadata: any }[]] {
         return [
-            args.shift().trim(),
+            `${args.shift()}`.trim(),
             ...args.map(value => {
                 return {
-                    tags: [this._appName, this.level],
+                    tags: [this._appName, `level-${this.level}`],
                     metadata: this.filterSensitiveData(value)
                 };
             })
         ];
     }
-
-    // PRIVATE
 
     protected _setup(baseLogger: any): void {
         const preprocessArgs = this.preprocessArgs.bind(this);
@@ -103,10 +108,14 @@ export class SmpLoggerService extends SmpLoggerMethods {
             .filter((v) => +v >= lvl)
             .map((k) => `${SmpLoggingLevels[k as keyof typeof SmpLoggingLevels]}`.toLowerCase());
         activeLevels.forEach((lvlKey) => {
-            // typeof baseLogger[lvlKey] === typeof isNaN && (this[lvlKey] = baseLogger[lvlKey].bind(baseLogger));
-            typeof baseLogger[`${lvlKey}`] === typeof isNaN && (this[lvlKey as SmpLoggerMethodKeys] = function(args: any[]) {
-                this[lvlKey as SmpLoggerMethodKeys](...preprocessArgs.apply(null, [args]);
-            });
+            // typeof baseLogger[lvlKey] === typeof isNaN && (this[lvlKey as SmpGenericLoggerMethodKeys] = baseLogger[lvlKey].bind(baseLogger));
+            if (typeof baseLogger[`${lvlKey}`] === typeof isNaN) {
+                this[lvlKey as SmpGenericLoggerMethodKeys] = function (...args: any[]) {
+                    // eslint-disable-next-line prefer-spread
+                    const preprocessedArgs = preprocessArgs.apply(null, args);
+                    baseLogger[lvlKey](...preprocessedArgs);
+                };
+            }
         });
 
         if (lvl > SmpLoggingLevels.OFF && console) {

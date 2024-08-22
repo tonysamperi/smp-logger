@@ -1,23 +1,7 @@
-import { SmpLoggerMethodKeys } from "./smp-logger-method-keys.type";
-import { smpNoop } from "./smp-noop.function";
+import {SmpLoggerMethodKeys} from "./smp-logger-method-keys.type";
+import {smpNoop} from "./smp-noop.function";
 
-export class SmpLoggerMethods {
-    /**
-     * Outputs a debugging message to the Web Console.
-     * @param message A JavaScript string containing zero or more substitution strings.
-     * @param optionalParams A list of JavaScript objects to output
-     *                       OR JavaScript objects with which to replace substitution strings within message.
-     */
-    debug: (message?: any, ...optionalParams: any[]) => void = smpNoop;
-
-    /**
-     * Outputs an error message to the Web Console.
-     * @param message A JavaScript string containing zero or more substitution strings.
-     * @param optionalParams A list of JavaScript objects to output
-     *                       OR JavaScript objects with which to replace substitution strings within message.
-     */
-    error: (message?: any, ...optionalParams: any[]) => void = smpNoop;
-
+export class SmpConsoleOnlyMethods {
     /**
      * Creates a new inline group in the Web Console log.
      * @param groupTitle An optional title for the group.
@@ -34,22 +18,6 @@ export class SmpLoggerMethods {
      * Exits the current inline group in the Web Console.
      */
     groupEnd: () => void = smpNoop;
-
-    /**
-     * Outputs an informational message to the Web Console.
-     * @param message A JavaScript string containing zero or more substitution strings.
-     * @param optionalParams A list of JavaScript objects to output
-     *                       OR JavaScript objects with which to replace substitution strings within message.
-     */
-    info: (message?: any, ...optionalParams: any[]) => void = smpNoop;
-
-    /**
-     * Outputs a message to the Web Console.
-     * @param message A JavaScript string containing zero or more substitution strings.
-     * @param optionalParams A list of JavaScript objects to output
-     *                       OR JavaScript objects with which to replace substitution strings within message.
-     */
-    log: (message?: any, ...optionalParams: any[]) => void = smpNoop;
 
     /**
      * Starts a timer you can use to track how long an operation takes.
@@ -73,6 +41,42 @@ export class SmpLoggerMethods {
      * @param optionalParams A list of JavaScript objects to output
      *                       OR JavaScript objects with which to replace substitution strings within message.
      */
+
+}
+
+export class SmpLoggerMethods extends SmpConsoleOnlyMethods {
+    /**
+     * Outputs a debugging message to the Web Console.
+     * @param message A JavaScript string containing zero or more substitution strings.
+     * @param optionalParams A list of JavaScript objects to output
+     *                       OR JavaScript objects with which to replace substitution strings within message.
+     */
+    debug: (message?: any, ...optionalParams: any[]) => void = smpNoop;
+
+    /**
+     * Outputs an error message to the Web Console.
+     * @param message A JavaScript string containing zero or more substitution strings.
+     * @param optionalParams A list of JavaScript objects to output
+     *                       OR JavaScript objects with which to replace substitution strings within message.
+     */
+    error: (message?: any, ...optionalParams: any[]) => void = smpNoop;
+
+    /**
+     * Outputs an informational message to the Web Console.
+     * @param message A JavaScript string containing zero or more substitution strings.
+     * @param optionalParams A list of JavaScript objects to output
+     *                       OR JavaScript objects with which to replace substitution strings within message.
+     */
+    info: (message?: any, ...optionalParams: any[]) => void = smpNoop;
+
+    /**
+     * Outputs a message to the Web Console.
+     * @param message A JavaScript string containing zero or more substitution strings.
+     * @param optionalParams A list of JavaScript objects to output
+     *                       OR JavaScript objects with which to replace substitution strings within message.
+     */
+    log: (message?: any, ...optionalParams: any[]) => void = smpNoop;
+
     warn: (message?: any, ...optionalParams: any[]) => void = smpNoop;
 
     static describe(): SmpLoggerMethodKeys[] {

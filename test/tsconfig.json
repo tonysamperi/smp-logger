@@ -1,0 +1,23 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "target": "es5",
+        "sourceMap": true,
+        "rootDir": "./",
+        "baseUrl": "./",
+        "paths": {
+            "smp-logger": [
+                "../dist"
+            ],
+            "smp-logger/*": [
+                "../dist/*"
+            ]
+        }
+    },
+    "include": [
+        "../src"
+    ],
+    "exclude": [
+        "node_modules"
+    ]
+}
