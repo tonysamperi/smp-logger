@@ -1,4 +1,4 @@
-import * as smpLogger from "../dist/smp-logger.js";
+import smpLogger from "../dist/smp-logger.js";
 import pkg from "../package.json" assert { type: "json" };
 
 if (pkg.version !== smpLogger.VERSION) {
