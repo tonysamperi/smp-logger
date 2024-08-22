@@ -29,6 +29,12 @@ export class SmpLoggerService extends SmpLoggerMethods {
 
     //
 
+    get activeLevels() {
+        return Object.values(SmpLoggingLevels)
+            .filter((v) => +v > SmpLoggingLevels.OFF && +v <= (this.level))
+            .map((k) => `${SmpLoggingLevels[k as keyof typeof SmpLoggingLevels]}`.toLowerCase());
+    }
+
     get appName(): string {
         return this._appName;
     }
@@ -103,11 +109,7 @@ export class SmpLoggerService extends SmpLoggerMethods {
 
     protected _setup(baseLogger: any): void {
         const preprocessArgs = this.preprocessArgs.bind(this);
-        const lvl = (this.constructor as typeof SmpLoggerService)._level;
-        const activeLevels: string[] = Object.values(SmpLoggingLevels)
-            .filter((v) => +v >= lvl)
-            .map((k) => `${SmpLoggingLevels[k as keyof typeof SmpLoggingLevels]}`.toLowerCase());
-        activeLevels.forEach((lvlKey) => {
+        this.activeLevels.forEach((lvlKey) => {
             // typeof baseLogger[lvlKey] === typeof isNaN && (this[lvlKey as SmpGenericLoggerMethodKeys] = baseLogger[lvlKey].bind(baseLogger));
             if (typeof baseLogger[`${lvlKey}`] === typeof isNaN) {
                 this[lvlKey as SmpGenericLoggerMethodKeys] = function (...args: any[]) {
@@ -118,7 +120,7 @@ export class SmpLoggerService extends SmpLoggerMethods {
             }
         });
 
-        if (lvl > SmpLoggingLevels.OFF && console) {
+        if (this.level > SmpLoggingLevels.OFF && console) {
             if (console.group && console.groupEnd) {
                 this.group = console.group.bind(console);
                 this.groupEnd = console.groupEnd.bind(console);
