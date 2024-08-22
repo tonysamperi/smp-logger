@@ -1,0 +1,34 @@
+name: Test
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build-and-test:
+
+    runs-on: ubuntu-latest
+
+    env:
+      LANG: it_IT.utf8
+      LIMIT_JEST: yes
+      TZ: Europe/Rome
+
+    strategy:
+      matrix:
+        node-version: [ 20.11.0 ]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      - run: npm i -g yarn
+      - run: corepack enable
+      - run: yarn install
+      - run: npm run build
+      - run: npm run test

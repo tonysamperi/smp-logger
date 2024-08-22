@@ -6,10 +6,6 @@ import {SmpGenericLoggerMethodKeys} from "../shared/smp-logger-method-keys.type"
 
 const defaultAppName = "[DEFAULT]" as const;
 
-/**
- * A logger service that provide the same functions as {@link console}.
- * The logger is bound to the console, so the Web Console shows the correct file and line number of the original call.
- */
 export class SmpLoggerService extends SmpLoggerMethods {
 
     static get INSTANCE() {
@@ -20,10 +16,6 @@ export class SmpLoggerService extends SmpLoggerMethods {
         return this._instances.keys();
     }
 
-    protected static _defaults: SmpLoggerConfig = {
-        level: SmpLoggingLevels.OFF
-    };
-    protected static _instance?: SmpLoggerService;
     protected static _instances: Map<string | typeof defaultAppName, SmpLoggerService> = new Map<string | typeof defaultAppName, SmpLoggerService>();
     protected static _level: SmpLoggingLevels = SmpLoggingLevels.OFF;
 
@@ -47,13 +39,17 @@ export class SmpLoggerService extends SmpLoggerMethods {
     protected _sensitivePropMask: string = "*****";
     protected _sensitiveProps: string[];
 
-    protected constructor(config: SmpLoggerConfig) {
+    protected constructor({
+                              sensitiveProps = [],
+                              level = SmpLoggingLevels.OFF,
+                              enablePreprocessing = !1
+                          }: SmpLoggerConfig) {
         super();
-        this._sensitiveProps = [...(config.sensitiveProps || []), ...["pwd", "password", "buffer", "token", "accessToken", "refreshToken"]];
-        config.enablePreprocessing || (this.preprocessArgs = (...args: any[]): any[] => {
+        this._sensitiveProps = [...(sensitiveProps), ...["pwd", "password", "buffer", "token", "accessToken", "refreshToken"]];
+        enablePreprocessing || (this.preprocessArgs = (...args: any[]): any[] => {
             return args;
         });
-        this._updateLevel(config.level);
+        this._updateLevel(level);
     }
 
 
@@ -95,12 +91,19 @@ export class SmpLoggerService extends SmpLoggerMethods {
 
     // PRIVATE
 
-    protected _defaultPreprocessArgs(...args: any[]): [string, ...{ tags: (string | number)[], metadata: any }[]] {
+    protected _defaultPreprocessArgs(...args: any[]): [string, string, ...{
+        tags: (string | number)[],
+        metadata: any
+    }[]] {
+        const now = new Date();
+
         return [
+            `${now.toISOString()}`,
             `${args.shift()}`.trim(),
             ...args.map(value => {
                 return {
                     tags: [this._appName, `level-${this.level}`],
+                    timestamp: +now,
                     metadata: this.filterSensitiveData(value)
                 };
             })
@@ -110,12 +113,13 @@ export class SmpLoggerService extends SmpLoggerMethods {
     protected _setup(baseLogger: any): void {
         const preprocessArgs = this.preprocessArgs.bind(this);
         this.activeLevels.forEach((lvlKey) => {
-            // typeof baseLogger[lvlKey] === typeof isNaN && (this[lvlKey as SmpGenericLoggerMethodKeys] = baseLogger[lvlKey].bind(baseLogger));
+            typeof baseLogger[lvlKey] === typeof isNaN && (this[lvlKey as SmpGenericLoggerMethodKeys] = baseLogger[lvlKey].bind(baseLogger));
+        });
+
+        this.activeLevels.forEach((lvlKey) => {
             if (typeof baseLogger[`${lvlKey}`] === typeof isNaN) {
                 this[lvlKey as SmpGenericLoggerMethodKeys] = function (...args: any[]) {
-                    // eslint-disable-next-line prefer-spread
-                    const preprocessedArgs = preprocessArgs.apply(null, args);
-                    baseLogger[lvlKey](...preprocessedArgs);
+                    baseLogger[lvlKey].apply(baseLogger, preprocessArgs.apply(null, args));
                 };
             }
         });

@@ -1,6 +1,6 @@
 {
-  "name": "smp-logger",
-  "version": "1.0.0",
+  "name": "@tonysamperi/logger",
+  "version": "1.0.0-beta.0",
   "description": "A logger that can wrap and control almost every logger library",
   "type": "commonjs",
   "main": "./dist/smp-logger.js",
@@ -28,7 +28,14 @@
     "release:beta": "npm publish --tag beta",
     "test": "jest --coverage"
   },
-  "author": "Tony Samperi",
+  "author": {
+    "name": "Tony Samperi",
+    "email": "git@tonysamperi.it",
+    "url": "https://tonysamperi.github.io"
+  },
+  "repository": {
+    "url": "https://"
+  },
   "license": "ISC",
   "devDependencies": {
     "@types/jest": "^29.5.12",
