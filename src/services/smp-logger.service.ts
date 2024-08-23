@@ -39,9 +39,7 @@ export class SmpLoggerService extends SmpLoggerMethods {
         return this._sessionId || this._storage.getItem(this._sessionIdKey) || void 0;
     }
 
-    // Noopable functions
-    
-    protected _appName: string = defaultAppName;
+    protected _appName: string;
     protected _sensitivePropMask: string = "*****";
     protected _sensitiveProps: string[];
     protected _sessionId: string | void;
@@ -52,7 +50,7 @@ export class SmpLoggerService extends SmpLoggerMethods {
                               sensitiveProps = [],
                               level = SmpLoggingLevels.OFF,
                               enablePreprocessing = !1,
-                              enableSessionId = !1,
+                              enableSessionId = !1
                           }: SmpLoggerConfig) {
         super();
         this._sensitiveProps = [...(sensitiveProps), ...["pwd", "password", "buffer", "token", "accessToken", "refreshToken"]];
@@ -71,8 +69,10 @@ export class SmpLoggerService extends SmpLoggerMethods {
     static init(config: SmpLoggerConfig,
                 appName: string = defaultAppName): SmpLoggerService {
         this._instances.has(appName) || this._instances.set(appName, new SmpLoggerService(config));
+        const instance = this.get(appName);
+        instance._appName = appName;
 
-        return this.get(appName);
+        return instance;
     }
 
     filterSensitiveData(value: any): any {
@@ -130,19 +130,19 @@ export class SmpLoggerService extends SmpLoggerMethods {
         return sessionId;
     }
 
-    
+
     protected _generateUUID(): string {
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+        return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
             const r = (Math.random() * 16) | 0;
-            const v = c === 'x' ? r : (r & 0x3) | 0x8;
+            const v = c === "x" ? r : (r & 0x3) | 0x8;
 
             return v.toString(16);
         });
     }
-    
-    protected _getStorage(): Pick<Storage, "getItem"| "setItem"| "removeItem"| "clear"> {
+
+    protected _getStorage(): Pick<Storage, "getItem" | "setItem" | "removeItem" | "clear"> {
         try {
-            if(typeof window !== 'undefined' && typeof window.sessionStorage === typeof isNaN) {
+            if (typeof window !== "undefined" && typeof window.sessionStorage === typeof isNaN) {
                 return sessionStorage;
             }
         }
@@ -154,7 +154,7 @@ export class SmpLoggerService extends SmpLoggerMethods {
             getItem: () => null,
             setItem: () => null,
             removeItem: () => null,
-            clear: () => null,
+            clear: () => null
         };
     }
 
