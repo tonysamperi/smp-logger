@@ -23,6 +23,7 @@
     "build:cjs": "webpack --config ./webpack.cjs.config.js",
     "clean": "rimraf dist",
     "prepublishOnly": "node ./test/test-dist.mjs",
+    "publish:beta": "npm publish --tag beta",
     "release": "npm publish",
     "release:beta": "npm publish --tag beta",
     "test": "jest --coverage"
