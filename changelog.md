@@ -1,2 +1,11 @@
+# 1.0.0-beta.1
+* Add session management
+
+# 1.0.0-beta.0
+* Beta release
+
+<!-- 
 # 1.0.0
-* First release! 🎉
+
+* First release! 🎉 
+-->

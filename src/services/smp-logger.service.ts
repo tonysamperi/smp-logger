@@ -21,10 +21,10 @@ export class SmpLoggerService extends SmpLoggerMethods {
 
     //
 
-    get activeLevels() {
+    get activeLevels(): SmpLoggingLevels[] {
         return Object.values(SmpLoggingLevels)
             .filter((v) => +v > SmpLoggingLevels.OFF && +v <= (this.level))
-            .map((k) => `${SmpLoggingLevels[k as keyof typeof SmpLoggingLevels]}`.toLowerCase());
+            .map((k) => SmpLoggingLevels[k as keyof typeof SmpLoggingLevels]);
     }
 
     get appName(): string {
@@ -35,20 +35,31 @@ export class SmpLoggerService extends SmpLoggerMethods {
         return (this.constructor as typeof SmpLoggerService)._level;
     }
 
+    get sessionId(): string | void {
+        return this._sessionId || this._storage.getItem(this._sessionIdKey) || void 0;
+    }
+
+    // Noopable functions
+    
     protected _appName: string = defaultAppName;
     protected _sensitivePropMask: string = "*****";
     protected _sensitiveProps: string[];
+    protected _sessionId: string | void;
+    protected _sessionIdKey: string = "lggr_sid";
+    protected _storage: Pick<Storage, "getItem" | "setItem" | "removeItem" | "clear">;
 
     protected constructor({
                               sensitiveProps = [],
                               level = SmpLoggingLevels.OFF,
-                              enablePreprocessing = !1
+                              enablePreprocessing = !1,
+                              enableSessionId = !1,
                           }: SmpLoggerConfig) {
         super();
         this._sensitiveProps = [...(sensitiveProps), ...["pwd", "password", "buffer", "token", "accessToken", "refreshToken"]];
         enablePreprocessing || (this.preprocessArgs = (...args: any[]): any[] => {
             return args;
         });
+        enableSessionId && this._setupSessionManager();
         this._updateLevel(level);
     }
 
@@ -85,14 +96,15 @@ export class SmpLoggerService extends SmpLoggerMethods {
         }
     }
 
-    preprocessArgs(...args: any[]): any[] {
-        return this._defaultPreprocessArgs.apply(this, args);
+    preprocessArgs(level: SmpGenericLoggerMethodKeys, ...args: any[]): any[] {
+        // eslint-disable-next-line prefer-spread
+        return this._defaultPreprocessArgs.apply(this, [level, ...args]);
     }
 
     // PRIVATE
 
-    protected _defaultPreprocessArgs(...args: any[]): [string, string, ...{
-        tags: (string | number)[],
+    protected _defaultPreprocessArgs(level: SmpGenericLoggerMethodKeys, ...args: any[]): [string, string, ...{
+        tags: (string | number | symbol)[],
         metadata: any
     }[]] {
         const now = new Date();
@@ -102,24 +114,59 @@ export class SmpLoggerService extends SmpLoggerMethods {
             `${args.shift()}`.trim(),
             ...args.map(value => {
                 return {
-                    tags: [this._appName, `level-${this.level}`],
+                    tags: [this._appName, `level-${SmpLoggingLevels[this.level]}`, level],
                     timestamp: +now,
+                    sessionId: this._sessionId,
                     metadata: this.filterSensitiveData(value)
                 };
             })
         ];
     }
 
+    protected _generateSessionId(): string {
+        const sessionId = this._generateUUID();
+        this._storage.setItem(this._sessionIdKey, sessionId);
+
+        return sessionId;
+    }
+
+    
+    protected _generateUUID(): string {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+            const r = (Math.random() * 16) | 0;
+            const v = c === 'x' ? r : (r & 0x3) | 0x8;
+
+            return v.toString(16);
+        });
+    }
+    
+    protected _getStorage(): Pick<Storage, "getItem"| "setItem"| "removeItem"| "clear"> {
+        try {
+            if(typeof window !== 'undefined' && typeof window.sessionStorage === typeof isNaN) {
+                return sessionStorage;
+            }
+        }
+        catch (e: any) {
+            console.debug(`${this.constructor.name} [${this._appName}]: error while checking sessionStorage`, e);
+        }
+
+        return {
+            getItem: () => null,
+            setItem: () => null,
+            removeItem: () => null,
+            clear: () => null,
+        };
+    }
+
     protected _setup(baseLogger: any): void {
         const preprocessArgs = this.preprocessArgs.bind(this);
-        this.activeLevels.forEach((lvlKey) => {
-            typeof baseLogger[lvlKey] === typeof isNaN && (this[lvlKey as SmpGenericLoggerMethodKeys] = baseLogger[lvlKey].bind(baseLogger));
-        });
-
-        this.activeLevels.forEach((lvlKey) => {
-            if (typeof baseLogger[`${lvlKey}`] === typeof isNaN) {
-                this[lvlKey as SmpGenericLoggerMethodKeys] = function (...args: any[]) {
-                    baseLogger[lvlKey].apply(baseLogger, preprocessArgs.apply(null, args));
+        this.activeLevels.forEach((loggingLevel: SmpLoggingLevels) => {
+            const loggerMethodKey = `${loggingLevel}`.toLowerCase() as SmpGenericLoggerMethodKeys;
+            // typeof baseLogger[loggerMethodKey] === typeof isNaN && (this[loggerMethodKey] = baseLogger[lvlKey].bind(baseLogger));
+            if (typeof baseLogger[loggerMethodKey] === typeof isNaN) {
+                this[loggerMethodKey] = function (...args: any[]) {
+                    // eslint-disable-next-line prefer-spread
+                    baseLogger[loggerMethodKey].apply(baseLogger, preprocessArgs.apply(null, [loggerMethodKey, ...args]));
                 };
             }
         });
@@ -139,6 +186,11 @@ export class SmpLoggerService extends SmpLoggerMethods {
                 this.timeEnd = console.timeEnd.bind(console);
             }
         }
+    }
+
+    protected _setupSessionManager(): void {
+        this._storage = this._getStorage();
+        this._sessionId = this.sessionId || this._generateSessionId();
     }
 
     protected _updateLevel(newValue: SmpLoggingLevels = SmpLoggingLevels.WARN) {
