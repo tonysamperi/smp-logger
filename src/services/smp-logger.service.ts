@@ -1,3 +1,5 @@
+import {SmpSessionManagerService} from "./smp-session-manager.service";
+//
 import {SmpLoggingLevels} from "../shared/smp-logging-levels.enum";
 import {SmpLoggerConfig} from "../shared/smp-logger-config.interface";
 import {SmpLoggerMethods} from "../shared/smp-logger-methods.class";
@@ -36,15 +38,14 @@ export class SmpLoggerService extends SmpLoggerMethods {
     }
 
     get sessionId(): string | void {
-        return this._sessionId || this._storage.getItem(this._sessionIdKey) || void 0;
+        return this._sessionId;
     }
 
     protected _appName: string;
     protected _sensitivePropMask: string = "*****";
     protected _sensitiveProps: string[];
     protected _sessionId: string | void;
-    protected _sessionIdKey: string = "lggr_sid";
-    protected _storage: Pick<Storage, "getItem" | "setItem" | "removeItem" | "clear">;
+    protected _sessionManager: SmpSessionManagerService = new SmpSessionManagerService();
 
     protected constructor({
                               sensitiveProps = [],
@@ -57,7 +58,7 @@ export class SmpLoggerService extends SmpLoggerMethods {
         enablePreprocessing || (this.preprocessArgs = (...args: any[]): any[] => {
             return args;
         });
-        enableSessionId && this._setupSessionManager();
+        enableSessionId && (this._sessionId = this._sessionManager.sessionId);
         this._updateLevel(level);
     }
 
@@ -116,46 +117,11 @@ export class SmpLoggerService extends SmpLoggerMethods {
                 return {
                     tags: [this._appName, `level-${SmpLoggingLevels[this.level]}`, level],
                     timestamp: +now,
-                    sessionId: this._sessionId,
+                    sessionId: this.sessionId,
                     metadata: this.filterSensitiveData(value)
                 };
             })
         ];
-    }
-
-    protected _generateSessionId(): string {
-        const sessionId = this._generateUUID();
-        this._storage.setItem(this._sessionIdKey, sessionId);
-
-        return sessionId;
-    }
-
-
-    protected _generateUUID(): string {
-        return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-            const r = (Math.random() * 16) | 0;
-            const v = c === "x" ? r : (r & 0x3) | 0x8;
-
-            return v.toString(16);
-        });
-    }
-
-    protected _getStorage(): Pick<Storage, "getItem" | "setItem" | "removeItem" | "clear"> {
-        try {
-            if (typeof window !== "undefined" && typeof window.sessionStorage === typeof isNaN) {
-                return sessionStorage;
-            }
-        }
-        catch (e: any) {
-            console.debug(`${this.constructor.name} [${this._appName}]: error while checking sessionStorage`, e);
-        }
-
-        return {
-            getItem: () => null,
-            setItem: () => null,
-            removeItem: () => null,
-            clear: () => null
-        };
     }
 
     protected _setup(baseLogger: any): void {
@@ -186,11 +152,6 @@ export class SmpLoggerService extends SmpLoggerMethods {
                 this.timeEnd = console.timeEnd.bind(console);
             }
         }
-    }
-
-    protected _setupSessionManager(): void {
-        this._storage = this._getStorage();
-        this._sessionId = this.sessionId || this._generateSessionId();
     }
 
     protected _updateLevel(newValue: SmpLoggingLevels = SmpLoggingLevels.WARN) {
