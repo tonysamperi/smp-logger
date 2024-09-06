@@ -1,3 +1,6 @@
+# 1.0.0-beta.4
+* Version bump
+
 # 1.0.0-beta.3
 * Fix instances management
 
