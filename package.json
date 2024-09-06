@@ -40,10 +40,6 @@
   "bugs": {
     "url": "https://github.com/tonysamperi/smp-logger/issues"
   },
-  "publishConfig": {
-    "registry": "https://registry.npm.org",
-    "access": "public"
-  },
   "license": "MIT",
   "devDependencies": {
     "@types/jest": "^29.5.12",
