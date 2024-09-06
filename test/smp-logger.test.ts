@@ -65,4 +65,16 @@ describe("SmpLoggerService", () => {
         console.info("preprocessedArgs", preprocessedArgs);
     });
 
+    it("should filter data without altering", () => {
+        const logger = SmpLoggerService.get(appNames.withSession);
+        const foo = {
+            password: "abcd",
+            date: new Date(),
+            someMap: new Map()
+        };
+        const filtered = logger.filterSensitiveData(foo);
+        filtered.password = foo.password;
+        expect(foo).toEqual(filtered);
+    });
+
 });

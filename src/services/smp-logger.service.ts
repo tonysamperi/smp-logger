@@ -78,25 +78,27 @@ export class SmpLoggerService extends SmpLoggerMethods {
         return instance;
     }
 
-    filterSensitiveData(value: any): any {
-        if (typeof value === typeof {} && !Array.isArray(value)) {
-            const maskedString = JSON.stringify(value, (k, v) => {
-                let masked = v;
-                if (this._sensitiveProps.includes(k)) {
-                    masked = this._sensitivePropMask;
-                }
+    filterSensitiveData<T>(value: T): T {
+        if (value === null || typeof value !== 'object' || Array.isArray(value) || value.constructor !== Object) {
 
-                return masked;
-            });
-
-            try {
-                return JSON.parse(maskedString);
-            }
-            catch (e) {
-                console.warn(`${this.constructor.name} [${this._appName}]: failed to re-parse value during cleanup`, value);
-                return maskedString;
-            }
+            return value;
         }
+        const filteredValue = {} as T;
+        for (const key in value) {
+            const fieldValue = (value as any)[key];
+            if (!Object.prototype.hasOwnProperty.call(value, key) || fieldValue === null || fieldValue === undefined) {
+
+                continue;
+            }    
+            if (this._sensitiveProps.includes(key)) {
+                (filteredValue as any)[key] = this._sensitivePropMask;
+
+                continue;
+            } 
+            (filteredValue as any)[key] = this.filterSensitiveData(fieldValue);
+        }
+    
+        return filteredValue;
     }
 
     preprocessArgs(level: SmpGenericLoggerMethodKeys, ...args: any[]): any[] {

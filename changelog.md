@@ -1,3 +1,6 @@
+# 1.0.0-beta.5
+* Fix filter function
+
 # 1.0.0-beta.4
 * Version bump
 
