@@ -64,12 +64,14 @@ export class SmpLoggerService extends SmpLoggerMethods {
 
 
     static get(appName: string = defaultAppName): SmpLoggerService {
-        return this._instances.get(appName) || this._instances.get(defaultAppName) || new SmpLoggerMethods() as SmpLoggerService;
+        return this._instances.get(appName) || this._instances.get(defaultAppName) || new this({
+            level: SmpLoggingLevels.OFF
+        });
     }
 
     static init(config: SmpLoggerConfig,
                 appName: string = defaultAppName): SmpLoggerService {
-        this._instances.has(appName) || this._instances.set(appName, new SmpLoggerService(config));
+        this._instances.has(appName) || this._instances.set(appName, new this(config));
         const instance = this.get(appName);
         instance._appName = appName;
 
