@@ -1,3 +1,9 @@
+# 1.0.0-beta.3
+* Fix instances management
+
+# 1.0.0-beta.2
+* Beta release
+
 # 1.0.0-beta.1
 * Add session management
 
