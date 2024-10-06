@@ -1,11 +1,12 @@
-import {SmpGenericLoggerMethodKeys, SmpLoggerService, SmpLoggingLevels, smpNoop} from "../src/index";
+import { SmpGenericLoggerMethodKeys, SmpLoggerService, SmpLoggingLevels, smpNoop } from "../src/index";
 
 describe("SmpLoggerService", () => {
 
     const appNames = {
         _: "[DEFAULT]",
         foo: "foo",
-        withSession: "withSession"
+        withSession: "withSession",
+        withPreprocessing: "withPreprocessing"
     };
     const loggerKeys: SmpGenericLoggerMethodKeys[] = Object.values(SmpLoggingLevels)
         .filter((v) => +v > SmpLoggingLevels.OFF)
@@ -22,6 +23,10 @@ describe("SmpLoggerService", () => {
             level: SmpLoggingLevels.DEBUG,
             enableSessionId: !0
         }, appNames.withSession);
+        SmpLoggerService.init({
+            level: SmpLoggingLevels.DEBUG,
+            enablePreprocessing: !0
+        }, appNames.withPreprocessing);
     });
 
     it("should have the correct methods", () => {
@@ -61,8 +66,6 @@ describe("SmpLoggerService", () => {
         const sid = logger.sessionId;
         expect(sid).toBeDefined();
         expect(`${sid}`.length).toBe(36);
-        const preprocessedArgs = logger.preprocessArgs("info", "foo");
-        console.info("preprocessedArgs", preprocessedArgs);
     });
 
     it("should filter data without altering", () => {
@@ -75,6 +78,35 @@ describe("SmpLoggerService", () => {
         const filtered = logger.filterSensitiveData(foo);
         filtered.password = foo.password;
         expect(foo).toEqual(filtered);
+    });
+
+    it("should not create metadata properties recursively w/ args", () => {
+        const logger = SmpLoggerService.get(appNames.withPreprocessing);
+        const preprocessedArgs = logger.preprocessArgs("info", "foo", {
+            base: "base-fubar",
+            password: "abc123",
+            deep: {
+                nested: "nested-fubar",
+                password: "abc123",
+                deeper: {
+                    deepest: "deepest-fubar",
+                    password: "abc123"
+                }
+            }
+        });
+        const expected = {
+            base: "base-fubar",
+            password: "*****",
+            deep: {
+                nested: "nested-fubar",
+                password: "*****",
+                deeper: {
+                    deepest: "deepest-fubar",
+                    password: "*****",
+                },
+            }
+        };
+        expect(preprocessedArgs[2].metadata).toEqual(expected);
     });
 
 });

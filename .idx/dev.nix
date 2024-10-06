@@ -11,6 +11,8 @@
     # pkgs.python311Packages.pip
     # pkgs.nodejs_20
     # pkgs.nodePackages.nodemon
+    pkgs.yarn
+    pkgs.corepack
   ];
 
   # Sets environment variables in the workspace
@@ -19,6 +21,12 @@
     # Search for the extensions you want on https://open-vsx.org/ and use "publisher.id"
     extensions = [
       # "vscodevim.vim"
+      "dbaeumer.vscode-eslint"
+      "eamodio.gitlens"
+      "mechatroner.rainbow-csv"
+      "oderwat.indent-rainbow"
+      "Orta.vscode-jest"
+      "ms-vscode.js-debug"
     ];
 
     # Enable previews
