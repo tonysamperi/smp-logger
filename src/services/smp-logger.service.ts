@@ -186,7 +186,7 @@ export class SmpLoggerService extends SmpLoggerMethods {
                               enableSessionId = !1
                           }: Partial<SmpLoggerConfig>) {
         this._sensitiveProps = [...(sensitiveProps), ...["pwd", "password", "buffer", "token", "accessToken", "refreshToken"]];
-        this.preprocessArgs = enablePreprocessing ? this._defaultPreprocessArgs : this._noopPreprocessArgs;
+        this.preprocessArgs = enablePreprocessing ? this.preprocessArgs : this._noopPreprocessArgs;
         this._sessionId = enableSessionId ? this._sessionManager.sessionId : void 0;
         this._updateLevel(level);
     }
