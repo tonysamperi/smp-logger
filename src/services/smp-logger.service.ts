@@ -18,8 +18,15 @@ export class SmpLoggerService extends SmpLoggerMethods {
         return this._instances.keys();
     }
 
+    static get NOOP_INSTANCE() {
+        return this._noopInstance;
+    }
+
     protected static _instances: Map<string | typeof defaultAppName, SmpLoggerService> = new Map<string | typeof defaultAppName, SmpLoggerService>();
     protected static _level: SmpLoggingLevels = SmpLoggingLevels.OFF;
+    protected static _noopInstance: SmpLoggerService = new this({
+        level: SmpLoggingLevels.OFF
+    });
 
     //
 
@@ -31,6 +38,23 @@ export class SmpLoggerService extends SmpLoggerMethods {
 
     get appName(): string {
         return this._appName;
+    }
+
+    get currentConfig(): SmpLoggerConfig {
+        return {
+            level: this.level,
+            enableSessionId: this.enableSessionId,
+            enablePreprocessing: this.enablePreprocessing,
+            sensitiveProps: this._sensitiveProps
+        };
+    }
+
+    get enablePreprocessing(): boolean {
+        return this.preprocessArgs !== this._noopPreprocessArgs;
+    }
+
+    get enableSessionId(): boolean {
+        return !!this.sessionId;
     }
 
     get level(): SmpLoggingLevels {
@@ -47,39 +71,58 @@ export class SmpLoggerService extends SmpLoggerMethods {
     protected _sessionId: string | void;
     protected _sessionManager: SmpSessionManagerService = new SmpSessionManagerService();
 
-    protected constructor({
-                              sensitiveProps = [],
-                              level = SmpLoggingLevels.OFF,
-                              enablePreprocessing = !1,
-                              enableSessionId = !1
-                          }: SmpLoggerConfig) {
+    protected constructor(config: Partial<SmpLoggerConfig>) {
         super();
-        this._sensitiveProps = [...(sensitiveProps), ...["pwd", "password", "buffer", "token", "accessToken", "refreshToken"]];
-        enablePreprocessing || (this.preprocessArgs = (...args: any[]): any[] => {
-            return args;
-        });
-        enableSessionId && (this._sessionId = this._sessionManager.sessionId);
-        this._updateLevel(level);
+        this._loadConfig(config);
     }
 
+    /* destroy an instance, returns true if found and destroyed, false otherwise */
+    static destroy(appName: string): boolean {
+        return this._instances.delete(appName);
+    }
 
     static get(appName: string = defaultAppName): SmpLoggerService {
-        return this._instances.get(appName) || this._instances.get(defaultAppName) || new this({
-            level: SmpLoggingLevels.OFF
-        });
+        return this._instances.get(appName) || this._instances.get(defaultAppName) || this._noopInstance;
     }
 
-    static init(config: SmpLoggerConfig,
+    static init(config: Partial<SmpLoggerConfig>,
                 appName: string = defaultAppName): SmpLoggerService {
-        this._instances.has(appName) || this._instances.set(appName, new this(config));
-        const instance = this.get(appName);
-        instance._appName = appName;
+        let instance;
+        if (this._instances.has(appName)) {
+            instance = this.get(appName);
+            const currentConfig: SmpLoggerConfig = instance.currentConfig;
+            instance._loadConfig({
+                ...currentConfig,
+                ...config
+            });
+        }
+        else {
+            this._instances.set(appName, new this(config));
+            instance = this.get(appName);
+            instance._appName = appName;
+        }
 
         return instance;
     }
 
+    /**
+     * Returns the current instance and destroys its reference
+     * @param appName
+     */
+    static pop(appName: string) {
+        const instance = this.get(appName);
+        this.destroy(appName);
+
+        return instance;
+    }
+
+    /* self destroy, returns true if found and destroyed, false otherwise */
+    destroy(): boolean {
+        return (this.constructor as typeof SmpLoggerService).destroy(this.appName);
+    }
+
     filterSensitiveData<T>(value: T): T {
-        if (value === null || typeof value !== 'object' || Array.isArray(value) || value.constructor !== Object) {
+        if (value === null || typeof value !== "object" || Array.isArray(value) || value.constructor !== Object) {
 
             return value;
         }
@@ -89,15 +132,15 @@ export class SmpLoggerService extends SmpLoggerMethods {
             if (!Object.prototype.hasOwnProperty.call(value, key) || fieldValue === null || fieldValue === undefined) {
 
                 continue;
-            }    
+            }
             if (this._sensitiveProps.includes(key)) {
                 (filteredValue as any)[key] = this._sensitivePropMask;
 
                 continue;
-            } 
+            }
             (filteredValue as any)[key] = this.filterSensitiveData(fieldValue);
         }
-    
+
         return filteredValue;
     }
 
@@ -126,6 +169,30 @@ export class SmpLoggerService extends SmpLoggerMethods {
                 };
             })
         ];
+    }
+
+    /**
+     * Load config as the constructor does, with defaults
+     * @param sensitiveProps
+     * @param level
+     * @param enablePreprocessing
+     * @param enableSessionId
+     * @protected
+     */
+    protected _loadConfig({
+                              sensitiveProps = [],
+                              level = SmpLoggingLevels.OFF,
+                              enablePreprocessing = !1,
+                              enableSessionId = !1
+                          }: Partial<SmpLoggerConfig>) {
+        this._sensitiveProps = [...(sensitiveProps), ...["pwd", "password", "buffer", "token", "accessToken", "refreshToken"]];
+        this.preprocessArgs = enablePreprocessing ? this._defaultPreprocessArgs : this._noopPreprocessArgs;
+        this._sessionId = enableSessionId ? this._sessionManager.sessionId : void 0;
+        this._updateLevel(level);
+    }
+
+    protected _noopPreprocessArgs(...args: any[]): any[] {
+        return args;
     }
 
     protected _setup(baseLogger: any): void {
