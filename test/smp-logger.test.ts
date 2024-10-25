@@ -109,4 +109,26 @@ describe("SmpLoggerService", () => {
         expect(preprocessedArgs[2].metadata).toEqual(expected);
     });
 
+    it("should update config when initializing with same name", () => {
+        const loggerName = "updateTest";
+        const logger = SmpLoggerService.init({
+            level: SmpLoggingLevels.ERROR
+        }, loggerName);
+        const loggerBravo = SmpLoggerService.init({
+            level: SmpLoggingLevels.WARN
+        }, loggerName);
+        expect(logger.level).toBe(SmpLoggingLevels.WARN);
+        expect(loggerBravo.level).toBe(SmpLoggingLevels.WARN);
+    });
+
+    it("should destroy the logger", () => {
+        const loggerName = "destroy";
+        SmpLoggerService.init({
+            level: SmpLoggingLevels.ERROR
+        }, loggerName);
+        SmpLoggerService.destroy(loggerName);
+        const loggerBravo = SmpLoggerService.get(loggerName);
+        expect(loggerBravo.appName).toBe("[DEFAULT]");
+    });
+
 });
