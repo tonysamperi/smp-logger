@@ -13,6 +13,7 @@
     # pkgs.nodePackages.nodemon
     pkgs.yarn
     pkgs.corepack
+    pkgs.gh
   ];
 
   # Sets environment variables in the workspace
