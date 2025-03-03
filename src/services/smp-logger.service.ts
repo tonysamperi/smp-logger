@@ -71,7 +71,7 @@ export class SmpLoggerService extends SmpLoggerMethods {
     protected _sessionId: string | void;
     protected _sessionManager: SmpSessionManagerService = new SmpSessionManagerService();
 
-    protected constructor(config: Partial<SmpLoggerConfig>) {
+    constructor(config: Partial<SmpLoggerConfig>) {
         super();
         this._loadConfig(config);
     }
