@@ -1,3 +1,6 @@
+# 2.0.0
+* Add ESM build
+
 # 1.2.0
 * Made constructor public, to allow extending to create injectables (Angular/Nest)
 

@@ -1,4 +1,4 @@
-import {SmpLoggingLevels} from "./smp-logging-levels.enum";
+import {SmpLoggingLevels} from "./smp-logging-levels.enum.js";
 
 export interface SmpLoggerConfig {
     enablePreprocessing: boolean;

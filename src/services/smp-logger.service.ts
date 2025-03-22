@@ -1,10 +1,10 @@
-import {SmpSessionManagerService} from "./smp-session-manager.service";
+import {SmpSessionManagerService} from "./smp-session-manager.service.js";
 //
-import {SmpLoggingLevels} from "../shared/smp-logging-levels.enum";
-import {SmpLoggerConfig} from "../shared/smp-logger-config.interface";
-import {SmpLoggerMethods} from "../shared/smp-logger-methods.class";
-import {smpNoop} from "../shared/smp-noop.function";
-import {SmpGenericLoggerMethodKeys} from "../shared/smp-logger-method-keys.type";
+import {SmpLoggingLevels} from "../shared/smp-logging-levels.enum.js";
+import {SmpLoggerConfig} from "../shared/smp-logger-config.interface.js";
+import {SmpLoggerMethods} from "../shared/smp-logger-methods.class.js";
+import {smpNoop} from "../shared/smp-noop.function.js";
+import {SmpGenericLoggerMethodKeys} from "../shared/smp-logger-method-keys.type.js";
 
 const defaultAppName = "[DEFAULT]" as const;
 

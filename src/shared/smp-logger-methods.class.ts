@@ -1,5 +1,5 @@
-import {SmpLoggerMethodKeys} from "./smp-logger-method-keys.type";
-import {smpNoop} from "./smp-noop.function";
+import {SmpLoggerMethodKeys} from "./smp-logger-method-keys.type.js";
+import {smpNoop} from "./smp-noop.function.js";
 
 export class SmpConsoleOnlyMethods {
     /**
