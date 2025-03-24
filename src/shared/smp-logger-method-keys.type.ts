@@ -1,4 +1,4 @@
-import {SmpConsoleOnlyMethods, SmpLoggerMethods} from "./smp-logger-methods.class";
+import {SmpConsoleOnlyMethods, SmpLoggerMethods} from "./smp-logger-methods.class.js";
 
 export type SmpLoggerMethodKeys = keyof SmpLoggerMethods;
 

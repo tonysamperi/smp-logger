@@ -1,8 +1,11 @@
 module.exports = {
-    "transform": {
-        ".(ts|tsx)": ["ts-jest", {
-            tsconfig: "./test/tsconfig.json"
-        }]
+    transform: {
+        "^.+\\.tsx?$": [
+            "ts-jest",
+            {
+                useESM: true
+            }
+        ]
     },
     "testEnvironment": "node",
     "testRegex": "\\.(spec|test)\\.ts$",
@@ -11,6 +14,10 @@ module.exports = {
         "tsx",
         "js"
     ],
+    extensionsToTreatAsEsm: [".ts"],
+    moduleNameMapper: {
+        "^(\\.{1,2}/.*)\\.js$": "$1"
+    },
     "coveragePathIgnorePatterns": [
         "/node_modules/",
         "/test/"
