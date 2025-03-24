@@ -1,3 +1,6 @@
+# 1.2.1
+* Fix default filterSensitiveData fn stripping nullish values
+
 # 1.2.0
 * Made constructor public, to allow extending to create injectables (Angular/Nest)
 

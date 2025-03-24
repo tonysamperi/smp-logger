@@ -130,6 +130,7 @@ export class SmpLoggerService extends SmpLoggerMethods {
         for (const key in value) {
             const fieldValue = (value as any)[key];
             if (!Object.prototype.hasOwnProperty.call(value, key) || fieldValue === null || fieldValue === undefined) {
+                (filteredValue as any)[key] = fieldValue;
 
                 continue;
             }
