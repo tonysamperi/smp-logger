@@ -48,7 +48,7 @@ jobs:
                       echo "First release detected. Using --access public."
                       npm release --access public
                     else
-                      npm release
+                      npm run release
                     fi
                   fi
                 env:
