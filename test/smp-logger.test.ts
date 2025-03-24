@@ -1,4 +1,4 @@
-import { SmpGenericLoggerMethodKeys, SmpLoggerService, SmpLoggingLevels, smpNoop } from "../src/index";
+import {SmpGenericLoggerMethodKeys, SmpLoggerService, SmpLoggingLevels, smpNoop} from "../src/index";
 
 describe("SmpLoggerService", () => {
 
@@ -80,6 +80,18 @@ describe("SmpLoggerService", () => {
         expect(foo).toEqual(filtered);
     });
 
+    it("should filter data without removing nullish values", () => {
+        const logger = SmpLoggerService.get(appNames.withSession);
+        const foo = {
+            someVoid: void 0,
+            someNull: null
+        };
+        const filtered = logger.filterSensitiveData(foo);
+        for (const k of Object.keys(foo)) {
+            expect(Object.prototype.hasOwnProperty.call(filtered, k)).toBe(!0);
+        }
+    });
+
     it("should not create metadata properties recursively w/ args", () => {
         const logger = SmpLoggerService.get(appNames.withPreprocessing);
         const preprocessedArgs = logger.preprocessArgs("info", "foo", {
@@ -102,8 +114,8 @@ describe("SmpLoggerService", () => {
                 password: "*****",
                 deeper: {
                     deepest: "deepest-fubar",
-                    password: "*****",
-                },
+                    password: "*****"
+                }
             }
         };
         expect(preprocessedArgs[2].metadata).toEqual(expected);

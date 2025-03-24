@@ -1,6 +1,6 @@
 {
   "name": "@tonysamperi/logger",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "A logger that can wrap and control almost every logger library",
   "type": "commonjs",
   "main": "./dist/smp-logger.js",

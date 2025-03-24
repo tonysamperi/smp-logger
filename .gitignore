@@ -58,3 +58,4 @@ Thumbs.db
 !.yarn/sdks
 !.yarn/versions
 
+.vscode
